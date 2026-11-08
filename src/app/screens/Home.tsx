@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { ShoppingBag, Package, TrendingUp, AlertTriangle, Bell, Plus } from 'lucide-react';
+import { ShoppingBag, Package, TrendingUp, AlertTriangle, Bell, Plus, CalendarClock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useProducts, useSales } from '../context/ProductContext';
 import { BottomNav } from '../components/BottomNav';
 import mochiLogo from '@/imports/Screenshot_2026-06-23_at_20.46.07.png';
-import { formatBRL } from '../../lib/format';
+import { formatBRL, expiryStatus, expiryLabel } from '../../lib/format';
 
 function isSameDay(a: Date, b: Date) {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
@@ -33,6 +33,13 @@ export function Home() {
   const lowStockProducts = products.filter(
     (p) => p.minStock !== undefined && p.quantity < p.minStock
   );
+
+  const expiryAlerts = products
+    .map((p) => ({ product: p, ...expiryStatus(p.expiry) }))
+    .filter((e) => e.status !== 'ok')
+    .sort((a, b) => a.days - b.days);
+  const expiredCount = expiryAlerts.filter((e) => e.status === 'expired').length;
+  const totalAlerts = lowStockProducts.length + expiryAlerts.length;
 
   const chartData = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(today);
@@ -138,10 +145,10 @@ export function Home() {
                 </div>
                 <span className="text-xs font-semibold" style={{ color: '#A07080' }}>Alertas</span>
               </div>
-              <p className="text-xl font-bold" style={{ color: '#3D1C1C' }}>
-                {lowStockProducts.length}
+              <p className="text-xl font-bold" style={{ color: totalAlerts > 0 ? '#D95F5F' : '#3D1C1C' }}>
+                {totalAlerts}
               </p>
-              <p className="text-xs" style={{ color: '#A07080' }}>reposição</p>
+              <p className="text-xs" style={{ color: '#A07080' }}>estoque e validade</p>
             </div>
           </div>
 
@@ -183,6 +190,61 @@ export function Home() {
             </ResponsiveContainer>
           </div>
 
+          {/* Alertas de validade */}
+          {expiryAlerts.length > 0 && (
+            <div
+              className="rounded-2xl p-4 shadow-sm"
+              style={{
+                background: expiredCount > 0 ? '#FFF5F5' : '#FFF8EC',
+                border: `1.5px solid ${expiredCount > 0 ? 'rgba(194,65,65,0.25)' : 'rgba(180,83,9,0.25)'}`,
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-bold flex items-center gap-2" style={{ color: expiredCount > 0 ? '#C24141' : '#B45309' }}>
+                  <CalendarClock className="w-4 h-4" />
+                  Alertas de Validade
+                </p>
+                <button
+                  onClick={() => navigate(`/inventory?filtro=${expiredCount > 0 ? 'vencidos' : 'vencendo'}&ordem=validade`)}
+                  className="text-xs font-semibold underline"
+                  style={{ color: '#7A4A55' }}
+                >
+                  Ver no estoque
+                </button>
+              </div>
+              <div className="space-y-2">
+                {expiryAlerts.slice(0, 4).map(({ product: p, status }) => (
+                  <div key={p.id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base">{p.emoji}</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate" style={{ color: '#3D1C1C' }}>{p.name}</p>
+                        <p className="text-xs" style={{ color: '#A07080' }}>
+                          Val: {p.expiry} · {p.quantity} un.
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className="flex-shrink-0 text-xs px-2 py-1 rounded-lg font-semibold"
+                      style={
+                        status === 'expired'
+                          ? { background: '#FFE0E0', color: '#C24141' }
+                          : { background: '#FFF1DC', color: '#B45309' }
+                      }
+                    >
+                      {expiryLabel(p.expiry)}
+                    </span>
+                  </div>
+                ))}
+                {expiryAlerts.length > 4 && (
+                  <p className="text-xs" style={{ color: '#A07080' }}>
+                    + {expiryAlerts.length - 4} produto(s)
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Alertas de estoque baixo */}
           {lowStockProducts.length > 0 && (
             <div
@@ -206,7 +268,7 @@ export function Home() {
                       </div>
                     </div>
                     <button
-                      onClick={() => navigate('/inventory')}
+                      onClick={() => navigate('/inventory?filtro=baixo')}
                       className="text-xs px-3 py-1.5 rounded-xl font-semibold"
                       style={{ background: '#D95F5F', color: '#FFF' }}
                     >

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit2, Trash2, RefreshCw } from 'lucide-react';
 import { Product } from '../types';
-import { formatBRL } from '../../lib/format';
+import { formatBRL, expiryStatus, expiryLabel } from '../../lib/format';
 
 interface ProductCardProps {
   product: Product;
@@ -12,13 +12,19 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onEdit, onDelete, onReplenishment }: ProductCardProps) {
   const isLowStock = product.minStock !== undefined && product.quantity < product.minStock;
+  const expiry = expiryStatus(product.expiry);
+  const expiryColors =
+    expiry.status === 'expired'
+      ? { bg: '#FFE0E0', fg: '#C24141' }
+      : { bg: '#FFF1DC', fg: '#B45309' };
+  const alertBorder = expiry.status === 'expired' ? 'rgba(194,65,65,0.45)' : null;
 
   return (
     <div
       className="rounded-2xl p-4 transition-shadow hover:shadow-lg"
       style={{
         background: '#FFFFFF',
-        border: `1.5px solid ${isLowStock ? 'rgba(217,95,95,0.35)' : 'rgba(244,160,192,0.2)'}`,
+        border: `1.5px solid ${alertBorder ?? (isLowStock ? 'rgba(217,95,95,0.35)' : 'rgba(244,160,192,0.2)')}`,
         boxShadow: `0 2px 12px ${isLowStock ? 'rgba(217,95,95,0.1)' : 'rgba(244,160,192,0.15)'}`,
       }}
     >
@@ -67,6 +73,16 @@ export function ProductCard({ product, onEdit, onDelete, onReplenishment }: Prod
             </span>
             <span style={{ color: '#A07080' }}>Val: {product.expiry}</span>
           </div>
+
+          {expiry.status !== 'ok' && (
+            <span
+              className="inline-block text-xs px-2 py-0.5 rounded-lg font-semibold mb-1"
+              style={{ background: expiryColors.bg, color: expiryColors.fg }}
+            >
+              {expiry.status === 'expired' ? '⛔ ' : '⏳ '}
+              {expiryLabel(product.expiry)}
+            </span>
+          )}
 
           <p className="font-bold text-sm" style={{ color: '#3D1C1C' }}>
             {formatBRL(product.price)}

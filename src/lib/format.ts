@@ -40,3 +40,35 @@ export function validateExpiry(br: string): string | null {
   if (date < today) return 'A validade não pode ser uma data passada.';
   return null;
 }
+
+// ---------- Validade ----------
+
+/** Prazo (em dias) a partir do qual um produto é considerado "vencendo". */
+export const EXPIRY_WARNING_DAYS = 30;
+
+export type ExpiryStatus = 'expired' | 'soon' | 'ok';
+
+/** Dias até a validade ("25/03/2027"). Negativo = vencido; 0 = vence hoje. */
+export function daysUntilExpiry(br: string): number {
+  const date = parseBR(br);
+  if (!date) return Number.POSITIVE_INFINITY;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((date.getTime() - today.getTime()) / 86_400_000);
+}
+
+export function expiryStatus(br: string): { status: ExpiryStatus; days: number } {
+  const days = daysUntilExpiry(br);
+  if (days < 0) return { status: 'expired', days };
+  if (days <= EXPIRY_WARNING_DAYS) return { status: 'soon', days };
+  return { status: 'ok', days };
+}
+
+/** Texto curto do selo: "Vencido há 3 dias", "Vence hoje", "Vence em 12 dias". */
+export function expiryLabel(br: string): string {
+  const { status, days } = expiryStatus(br);
+  if (status === 'expired') return days === -1 ? 'Vencido há 1 dia' : `Vencido há ${-days} dias`;
+  if (days === 0) return 'Vence hoje';
+  if (days === 1) return 'Vence amanhã';
+  return `Vence em ${days} dias`;
+}

@@ -9,10 +9,12 @@ begin;
 
 truncate table sales, replenishments, products restart identity cascade;
 
+-- Validades relativas à data de execução, para a demonstração sempre mostrar os alertas:
+-- Ramune vence em 12 dias ("vencendo") e Mochi Matcha venceu há 2 dias ("vencido").
 insert into products (name, category, quantity, expiry, price, min_stock, emoji) values
   ('Pocky Morango',   'Biscoitos',  45, '2027-03-25', 12.90, 20, '🍓'),
-  ('Ramune Original', 'Bebidas',    30, '2027-05-15',  8.50, 15, '🥤'),
-  ('Mochi Matcha',    'Doces',       8, '2027-01-10', 15.00, 20, '🍡'),
+  ('Ramune Original', 'Bebidas',    30, current_date + 12, 8.50, 15, '🥤'),
+  ('Mochi Matcha',    'Doces',       8, current_date - 2, 15.00, 20, '🍡'),
   ('Hello Panda',     'Biscoitos',   5, '2027-04-01',  9.90, 15, '🐼'),
   ('Matcha Kit Kat',  'Chocolates', 22, '2027-06-30', 19.90, 10, '🍫');
 

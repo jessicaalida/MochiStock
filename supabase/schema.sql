@@ -82,6 +82,9 @@ begin
   if p_qty is null or p_qty <= 0 then
     raise exception 'Quantidade deve ser maior que zero';
   end if;
+  if prod.expiry < current_date then
+    raise exception 'Produto vencido (validade %) não pode ser vendido', to_char(prod.expiry, 'DD/MM/YYYY');
+  end if;
   if prod.quantity < p_qty then
     raise exception 'Estoque insuficiente. Disponível: % unidades', prod.quantity;
   end if;

@@ -4,7 +4,7 @@ import { useProducts, useSales } from '../context/ProductContext';
 import { BottomNav } from '../components/BottomNav';
 import { PaymentMethod } from '../types';
 import { toast } from 'sonner';
-import { formatBRL } from '../../lib/format';
+import { formatBRL, expiryStatus, expiryLabel } from '../../lib/format';
 
 const paymentMethods: { key: PaymentMethod; label: string; icon: string }[] = [
   { key: 'pix', label: 'Pix', icon: '⚡' },
@@ -32,6 +32,7 @@ export function Sales() {
   const [submitted, setSubmitted] = useState(false);
 
   const selectedProduct = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
+  const selectedExpiry = selectedProduct ? expiryStatus(selectedProduct.expiry) : null;
 
   const qty = parseFloat(quantity) || 0;
   const disc = parseFloat(discount) || 0;
@@ -44,6 +45,10 @@ export function Sales() {
 
     if (!productId || qty <= 0) {
       toast.error('Selecione um produto e informe a quantidade.');
+      return;
+    }
+    if (selectedExpiry?.status === 'expired') {
+      toast.error('Produto vencido não pode ser vendido.');
       return;
     }
 
@@ -151,6 +156,22 @@ export function Sales() {
                   <span className="text-sm font-bold" style={{ color: '#3D1C1C' }}>
                     {formatBRL(selectedProduct.price)}
                   </span>
+                </div>
+              )}
+
+              {/* Aviso de validade */}
+              {selectedProduct && selectedExpiry && selectedExpiry.status !== 'ok' && (
+                <div
+                  className="px-4 py-3 rounded-2xl text-sm font-semibold"
+                  style={
+                    selectedExpiry.status === 'expired'
+                      ? { background: '#FFE0E0', color: '#C24141', border: '1.5px solid rgba(194,65,65,0.3)' }
+                      : { background: '#FFF1DC', color: '#B45309', border: '1.5px solid rgba(180,83,9,0.25)' }
+                  }
+                >
+                  {selectedExpiry.status === 'expired'
+                    ? `⛔ ${expiryLabel(selectedProduct.expiry)}. Produto vencido não pode ser vendido.`
+                    : `⏳ ${expiryLabel(selectedProduct.expiry)} (${selectedProduct.expiry}). Priorize a venda deste lote.`}
                 </div>
               )}
 

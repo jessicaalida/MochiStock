@@ -1,25 +1,62 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Search, Plus, X } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { BottomNav } from '../components/BottomNav';
 import { useProducts } from '../context/ProductContext';
 import { Product } from '../types';
 import { toast } from 'sonner';
+import { expiryStatus, daysUntilExpiry, EXPIRY_WARNING_DAYS } from '../../lib/format';
+
+type Filter = 'todos' | 'vencidos' | 'vencendo' | 'baixo';
+type Sort = 'nome' | 'validade';
 
 export function InventoryList() {
   const navigate = useNavigate();
   const { products, deleteProduct, requestReplenishment } = useProducts();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [replenishProduct, setReplenishProduct] = useState<Product | null>(null);
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filterParam = searchParams.get('filtro') as Filter | null;
+  const filter: Filter = filterParam && ['vencidos', 'vencendo', 'baixo'].includes(filterParam) ? filterParam : 'todos';
+  const sort: Sort = searchParams.get('ordem') === 'validade' ? 'validade' : 'nome';
 
-  const lowStockCount = products.filter((p) => p.minStock !== undefined && p.quantity < p.minStock).length;
+  const updateParams = (next: { filtro?: Filter; ordem?: Sort }) => {
+    const f = next.filtro ?? filter;
+    const o = next.ordem ?? sort;
+    const params: Record<string, string> = {};
+    if (f !== 'todos') params.filtro = f;
+    if (o !== 'nome') params.ordem = o;
+    setSearchParams(params, { replace: true });
+  };
+
+  const isLow = (p: Product) => p.minStock !== undefined && p.quantity < p.minStock;
+  const expiredCount = products.filter((p) => expiryStatus(p.expiry).status === 'expired').length;
+  const expiringCount = products.filter((p) => expiryStatus(p.expiry).status === 'soon').length;
+  const lowStockCount = products.filter(isLow).length;
+
+  const term = searchTerm.toLowerCase();
+  const filtered = products
+    .filter((p) => p.name.toLowerCase().includes(term) || p.category.toLowerCase().includes(term))
+    .filter((p) => {
+      if (filter === 'vencidos') return expiryStatus(p.expiry).status === 'expired';
+      if (filter === 'vencendo') return expiryStatus(p.expiry).status === 'soon';
+      if (filter === 'baixo') return isLow(p);
+      return true;
+    })
+    .sort((a, b) =>
+      sort === 'validade'
+        ? daysUntilExpiry(a.expiry) - daysUntilExpiry(b.expiry)
+        : a.name.localeCompare(b.name, 'pt-BR')
+    );
+
+  const chips: { key: Filter; label: string; count?: number; color?: string }[] = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'vencidos', label: 'Vencidos', count: expiredCount, color: '#C24141' },
+    { key: 'vencendo', label: `Vencendo (${EXPIRY_WARNING_DAYS}d)`, count: expiringCount, color: '#B45309' },
+    { key: 'baixo', label: 'Estoque baixo', count: lowStockCount, color: '#D95F5F' },
+  ];
 
   const handleEdit = (product: Product) => navigate(`/edit/${product.id}`);
 
@@ -118,15 +155,62 @@ export function InventoryList() {
           </div>
         </div>
 
+        {/* Filtros e ordenação */}
+        <div className="px-4 mt-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          {chips.map((c) => {
+            const active = filter === c.key;
+            return (
+              <button
+                key={c.key}
+                onClick={() => updateParams({ filtro: c.key })}
+                className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                style={{
+                  background: active ? (c.color ?? '#E8839E') : '#FFFFFF',
+                  color: active ? '#FFFFFF' : (c.color ?? '#7A4A55'),
+                  border: `1.5px solid ${active ? 'transparent' : 'rgba(244,160,192,0.35)'}`,
+                }}
+              >
+                {c.label}
+                {c.count !== undefined && ` · ${c.count}`}
+              </button>
+            );
+          })}
+        </div>
+        <div className="px-4 mt-2 flex items-center justify-end gap-2 text-xs" style={{ color: '#A07080' }}>
+          <span>Ordenar por:</span>
+          {(['nome', 'validade'] as Sort[]).map((o) => (
+            <button
+              key={o}
+              onClick={() => updateParams({ ordem: o })}
+              className="font-semibold px-2 py-1 rounded-lg"
+              style={{
+                background: sort === o ? '#F9E4EC' : 'transparent',
+                color: sort === o ? '#3D1C1C' : '#A07080',
+              }}
+            >
+              {o === 'nome' ? 'Nome' : 'Validade'}
+            </button>
+          ))}
+        </div>
+
         {/* Lista */}
-        <div className="px-4 mt-4 space-y-3">
+        <div className="px-4 mt-2 space-y-3">
           {filtered.length === 0 ? (
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🍡</div>
               <p className="font-medium" style={{ color: '#A07080' }}>
-                {searchTerm ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
+                {searchTerm || filter !== 'todos' ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
               </p>
-              {!searchTerm && (
+              {filter !== 'todos' && (
+                <button
+                  onClick={() => updateParams({ filtro: 'todos' })}
+                  className="mt-3 text-xs font-semibold underline"
+                  style={{ color: '#E8839E' }}
+                >
+                  Ver todos os produtos
+                </button>
+              )}
+              {!searchTerm && filter === 'todos' && (
                 <button
                   onClick={() => navigate('/new')}
                   className="mt-4 px-6 py-3 rounded-2xl font-semibold text-white"

@@ -59,7 +59,12 @@ export function EditProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const expiryError = validateExpiry(formData.expiry);
+    // Permite salvar um produto já vencido sem mexer na validade (ex.: ajustar quantidade);
+    // a regra de data passada vale quando a validade é alterada.
+    const expiryError =
+      formData.expiry === product.expiry
+        ? null
+        : validateExpiry(formData.expiry);
     if (expiryError) {
       toast.error(expiryError);
       return;
