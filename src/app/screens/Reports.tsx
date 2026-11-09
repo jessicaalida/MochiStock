@@ -4,7 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { useProducts, useSales } from '../context/ProductContext';
 import { BottomNav } from '../components/BottomNav';
 import { Sale } from '../types';
-import { formatBRL } from '../../lib/format';
+import { formatBRL, escapeHtml } from '../../lib/format';
 
 type Period = '7d' | '30d' | 'custom';
 
@@ -85,7 +85,7 @@ export function Reports() {
   const handleExportPDF = () => {
     const topList = topProducts.slice(0, 5).map((p, i) =>
       `<tr>
-        <td style="padding:8px;border-bottom:1px solid #f0d0e0;">${i + 1}. ${p.emoji || ''} ${p.name}</td>
+        <td style="padding:8px;border-bottom:1px solid #f0d0e0;">${i + 1}. ${escapeHtml(p.emoji)} ${escapeHtml(p.name)}</td>
         <td style="padding:8px;border-bottom:1px solid #f0d0e0;text-align:center;">${p.qty} un.</td>
         <td style="padding:8px;border-bottom:1px solid #f0d0e0;text-align:right;font-weight:bold;">${formatBRL(p.revenue)}</td>
       </tr>`
@@ -93,7 +93,7 @@ export function Reports() {
 
     const lowList = products
       .filter((p) => p.minStock !== undefined && p.quantity < p.minStock)
-      .map((p) => `<li>${p.emoji || ''} ${p.name}: ${p.quantity} un. (mín: ${p.minStock})</li>`)
+      .map((p) => `<li>${escapeHtml(p.emoji)} ${escapeHtml(p.name)}: ${p.quantity} un. (mín: ${p.minStock})</li>`)
       .join('');
 
     const html = `<!DOCTYPE html>
@@ -119,8 +119,8 @@ export function Reports() {
 <body>
   <h1>🍡 MochiMochi Candy Store</h1>
   <p style="color:#A07080;font-size:13px;">
-    Relatório — ${period === '7d' ? 'Últimos 7 dias' : period === '30d' ? 'Últimos 30 dias' : `${startDate} a ${endDate}`}<br/>
-    Loja: ${loja} · Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+    Relatório — ${period === '7d' ? 'Últimos 7 dias' : period === '30d' ? 'Últimos 30 dias' : `${escapeHtml(startDate)} a ${escapeHtml(endDate)}`}<br/>
+    Loja: ${escapeHtml(loja)} · Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
   </p>
   <h2>📊 Indicadores</h2>
   <div class="kpis">

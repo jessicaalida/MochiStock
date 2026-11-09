@@ -45,6 +45,15 @@ npm install
 npm run dev
 ```
 
+## Segurança
+
+- **Banco:** Row Level Security em todas as tabelas; só usuários autenticados acessam; cadastro aberto desativado.
+- **Regras críticas no banco:** a função `register_sale` confere estoque e validade numa única transação.
+- **XSS:** dados digitados por usuários são escapados (`escapeHtml`) antes de entrar no HTML do relatório em PDF.
+- **Cabeçalhos HTTP** (`vercel.json`): Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e HSTS.
+- **Dependências:** só os pacotes usados pelo app; `npm audit` sem vulnerabilidades conhecidas.
+- **Segredos:** nenhuma chave secreta no código; a publishable key é pública por natureza e protegida pelo RLS.
+
 ## Manutenção
 
 - **Limpar dados de teste** (por exemplo, antes da apresentação): execute `supabase/reset_demo.sql` no SQL Editor. Os usuários não são apagados.

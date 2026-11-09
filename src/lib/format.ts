@@ -72,3 +72,19 @@ export function expiryLabel(br: string): string {
   if (days === 1) return 'Vence amanhã';
   return `Vence em ${days} dias`;
 }
+
+// ---------- Segurança ----------
+
+/**
+ * Escapa caracteres especiais de HTML. Use sempre que um dado digitado por usuário
+ * (nome de produto, emoji, datas de filtro) for inserido em HTML montado como texto,
+ * para evitar XSS (OWASP A03 – Injection).
+ */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
