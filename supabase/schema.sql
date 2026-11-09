@@ -1,8 +1,8 @@
 -- =====================================================================
 -- MochiStock: estrutura do banco (Supabase / PostgreSQL)
 -- Como usar: Supabase → SQL Editor → New query → colar tudo → Run.
--- Pode ser executado mais de uma vez sem apagar dados.
--- Depois rode supabase/reset_demo.sql para carregar os dados de exemplo.
+-- Pode ser executado mais de uma vez sem apagar dados e sem alterar permissões.
+-- Ordem: schema.sql → roles.sql (perfis, políticas e função de venda) → reset_demo.sql.
 -- =====================================================================
 
 -- ---------- Tabelas ----------
@@ -47,61 +47,9 @@ create table if not exists replenishments (
 
 create index if not exists sales_created_at_idx on sales (created_at desc);
 
--- ---------- Segurança (RLS): só usuários autenticados acessam ----------
+-- ---------- Segurança (RLS) ----------
+-- RLS ativo sem nenhuma política: até rodar supabase/roles.sql, nenhum usuário acessa os dados
+-- (falha segura). As políticas por perfil e a função de venda ficam todas em roles.sql.
 alter table products enable row level security;
 alter table sales enable row level security;
 alter table replenishments enable row level security;
-
-drop policy if exists "logados" on products;
-drop policy if exists "logados" on sales;
-drop policy if exists "logados" on replenishments;
-create policy "logados" on products       for all to authenticated using (true) with check (true);
-create policy "logados" on sales          for all to authenticated using (true) with check (true);
-create policy "logados" on replenishments for all to authenticated using (true) with check (true);
-
--- ---------- Venda atômica ----------
--- Confere o estoque, registra a venda e dá baixa numa única transação.
--- O "for update" trava a linha do produto: duas vendas simultâneas não deixam o estoque negativo.
-create or replace function register_sale(
-  p_product_id uuid,
-  p_qty int,
-  p_discount numeric,
-  p_method text
-) returns sales
-language plpgsql
-set search_path = public
-as $$
-declare
-  prod products;
-  s sales;
-begin
-  select * into prod from products where id = p_product_id for update;
-  if not found then
-    raise exception 'Produto não encontrado';
-  end if;
-  if p_qty is null or p_qty <= 0 then
-    raise exception 'Quantidade deve ser maior que zero';
-  end if;
-  if prod.expiry < current_date then
-    raise exception 'Produto vencido (validade %) não pode ser vendido', to_char(prod.expiry, 'DD/MM/YYYY');
-  end if;
-  if prod.quantity < p_qty then
-    raise exception 'Estoque insuficiente. Disponível: % unidades', prod.quantity;
-  end if;
-  if coalesce(p_discount, 0) < 0 then
-    raise exception 'O desconto não pode ser negativo';
-  end if;
-
-  update products set quantity = quantity - p_qty where id = p_product_id;
-
-  insert into sales (product_id, product_name, product_emoji, quantity, unit_price, discount, total, payment_method)
-  values (prod.id, prod.name, prod.emoji, p_qty, prod.price, coalesce(p_discount, 0),
-          greatest(prod.price * p_qty - coalesce(p_discount, 0), 0), p_method)
-  returning * into s;
-
-  return s;
-end;
-$$;
-
-revoke execute on function register_sale(uuid, int, numeric, text) from public, anon;
-grant execute on function register_sale(uuid, int, numeric, text) to authenticated;

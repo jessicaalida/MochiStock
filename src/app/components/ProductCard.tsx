@@ -5,8 +5,9 @@ import { formatBRL, expiryStatus, expiryLabel } from '../../lib/format';
 
 interface ProductCardProps {
   product: Product;
-  onEdit: (product: Product) => void;
-  onDelete: (id: string) => void;
+  /** Ausentes para o operador: os botões de editar e excluir não aparecem. */
+  onEdit?: (product: Product) => void;
+  onDelete?: (id: string) => void;
   onReplenishment?: (product: Product) => void;
 }
 
@@ -91,6 +92,7 @@ export function ProductCard({ product, onEdit, onDelete, onReplenishment }: Prod
 
         {/* Ações */}
         <div className="flex flex-col gap-2 justify-center flex-shrink-0">
+          {onEdit && (
           <button
             onClick={() => onEdit(product)}
             className="p-2 rounded-xl transition-colors"
@@ -99,6 +101,8 @@ export function ProductCard({ product, onEdit, onDelete, onReplenishment }: Prod
           >
             <Edit2 className="w-4 h-4" style={{ color: '#F4A0C0' }} />
           </button>
+          )}
+          {onDelete && (
           <button
             onClick={() => onDelete(product.id)}
             className="p-2 rounded-xl transition-colors hover:bg-red-100"
@@ -107,6 +111,7 @@ export function ProductCard({ product, onEdit, onDelete, onReplenishment }: Prod
           >
             <Trash2 className="w-4 h-4" style={{ color: '#D95F5F' }} />
           </button>
+          )}
           {isLowStock && onReplenishment && (
             <button
               onClick={() => onReplenishment(product)}

@@ -17,7 +17,7 @@ function isSameMonth(a: Date, b: Date) {
 
 export function Home() {
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { products, isAdmin } = useProducts();
   const { sales } = useSales();
 
   const today = new Date();
@@ -336,12 +336,16 @@ export function Home() {
               <span className="text-xs">Nova Venda</span>
             </button>
             <button
-              onClick={() => navigate('/new')}
+              onClick={() => navigate(isAdmin ? '/new' : '/inventory')}
               className="py-4 rounded-2xl font-bold flex flex-col items-center gap-1 transition-all"
               style={{ background: '#FFFFFF', border: '1.5px solid rgba(244,160,192,0.4)', color: '#3D1C1C' }}
             >
-              <Plus className="w-5 h-5" style={{ color: '#F4A0C0' }} />
-              <span className="text-xs">Novo Produto</span>
+              {isAdmin ? (
+                <Plus className="w-5 h-5" style={{ color: '#F4A0C0' }} />
+              ) : (
+                <Package className="w-5 h-5" style={{ color: '#F4A0C0' }} />
+              )}
+              <span className="text-xs">{isAdmin ? 'Novo Produto' : 'Ver Estoque'}</span>
             </button>
           </div>
         </div>

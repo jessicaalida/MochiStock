@@ -28,7 +28,7 @@ As regras críticas ficam no banco: a função `register_sale` confere o estoque
 
 ### 1. Supabase
 1. Crie o projeto (região South America – São Paulo).
-2. **SQL Editor:** execute `supabase/schema.sql` e depois `supabase/reset_demo.sql`.
+2. **SQL Editor:** execute `supabase/schema.sql`, depois `supabase/roles.sql` (perfis de acesso) e, por fim, `supabase/reset_demo.sql`.
 3. **Authentication → Sign In / Providers:** desative *Allow new users to sign up* e, em Email, *Confirm email*.
 4. **Authentication → Users → Add user:** crie as contas (administrador, operador, avaliador).
 5. **Project Settings → API Keys:** copie a *Project URL* e a *Publishable key*.
@@ -48,6 +48,8 @@ npm run dev
 ## Segurança
 
 - **Banco:** Row Level Security em todas as tabelas; só usuários autenticados acessam; cadastro aberto desativado.
+- **Perfis de acesso** (`supabase/roles.sql`): **administrador** cadastra, edita e exclui produtos e confirma reposições; **operador** (caixa) consulta, vende e solicita reposição. Ninguém altera ou apaga vendas. Usuários novos entram como operador.
+- **Mudar o perfil de alguém:** `update profiles set role = 'admin' where user_id = (select id from auth.users where email = '...');`
 - **Regras críticas no banco:** a função `register_sale` confere estoque e validade numa única transação.
 - **XSS:** dados digitados por usuários são escapados (`escapeHtml`) antes de entrar no HTML do relatório em PDF.
 - **Cabeçalhos HTTP** (`vercel.json`): Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy e HSTS.

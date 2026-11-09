@@ -13,7 +13,7 @@ type Sort = 'nome' | 'validade';
 
 export function InventoryList() {
   const navigate = useNavigate();
-  const { products, deleteProduct, requestReplenishment } = useProducts();
+  const { products, deleteProduct, requestReplenishment, isAdmin } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [replenishProduct, setReplenishProduct] = useState<Product | null>(null);
@@ -110,6 +110,7 @@ export function InventoryList() {
                 )}
               </div>
             </div>
+            {isAdmin && (
             <button
               onClick={() => navigate('/new')}
               className="w-10 h-10 rounded-2xl flex items-center justify-center transition-all"
@@ -118,6 +119,7 @@ export function InventoryList() {
             >
               <Plus className="w-5 h-5 text-white" />
             </button>
+            )}
           </div>
 
           {/* Barra de busca */}
@@ -210,7 +212,7 @@ export function InventoryList() {
                   Ver todos os produtos
                 </button>
               )}
-              {!searchTerm && filter === 'todos' && (
+              {!searchTerm && filter === 'todos' && isAdmin && (
                 <button
                   onClick={() => navigate('/new')}
                   className="mt-4 px-6 py-3 rounded-2xl font-semibold text-white"
@@ -225,8 +227,8 @@ export function InventoryList() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+                onEdit={isAdmin ? handleEdit : undefined}
+                onDelete={isAdmin ? handleDelete : undefined}
                 onReplenishment={handleReplenishmentRequest}
               />
             ))

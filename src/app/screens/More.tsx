@@ -7,7 +7,7 @@ import mochiLogo from '@/imports/Screenshot_2026-06-23_at_20.46.07.png';
 
 export function More() {
   const navigate = useNavigate();
-  const { logout, userEmail } = useAuth();
+  const { logout, userEmail, role } = useAuth();
   const { products, replenishments } = useProducts();
 
   const lowStockCount = products.filter((p) => p.minStock !== undefined && p.quantity < p.minStock).length;
@@ -82,7 +82,7 @@ export function More() {
             menuItem(
               <User className="w-4 h-4" style={{ color: '#F4A0C0' }} />,
               'Perfil',
-              `${userEmail ?? 'Usuário'} — MochiMochi Candy Store`,
+              `${userEmail ?? 'Usuário'} · ${role === 'admin' ? 'Administrador' : 'Operador'}`,
               () => {},
             ),
           ])}
