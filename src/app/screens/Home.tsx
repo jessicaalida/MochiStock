@@ -6,6 +6,7 @@ import { useProducts, useSales } from '../context/ProductContext';
 import { BottomNav } from '../components/BottomNav';
 import mochiLogo from '@/imports/Screenshot_2026-06-23_at_20.46.07.png';
 import { formatBRL, expiryStatus, expiryLabel } from '../../lib/format';
+import { STORE_NAME, STORE_UNIT } from '../../lib/store';
 
 function isSameDay(a: Date, b: Date) {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
@@ -73,7 +74,7 @@ export function Home() {
         >
           <div className="flex items-center justify-between mb-1">
             <div>
-              <p className="text-white/80 text-xs font-medium">MochiMochi Candy Store</p>
+              <p className="text-white/80 text-xs font-medium">{STORE_NAME} · {STORE_UNIT}</p>
               <h1 className="text-2xl font-bold text-white">Dashboard 🏠</h1>
             </div>
             <img src={mochiLogo} alt="Mochi" className="w-14 h-14 object-contain drop-shadow-lg" />

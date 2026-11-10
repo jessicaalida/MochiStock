@@ -5,10 +5,10 @@ import { useProducts, useSales } from '../context/ProductContext';
 import { BottomNav } from '../components/BottomNav';
 import { Sale } from '../types';
 import { formatBRL, escapeHtml } from '../../lib/format';
+import { STORE_NAME, STORE_UNIT } from '../../lib/store';
 
 type Period = '7d' | '30d' | 'custom';
 
-const lojas = ['Todas as Lojas', 'Unidade Centro', 'Unidade Norte', 'Unidade Sul'];
 
 function isSameDay(a: Date, b: Date) {
   return a.getDate() === b.getDate() && a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
@@ -68,7 +68,6 @@ export function Reports() {
   const { sales } = useSales();
 
   const [period, setPeriod] = useState<Period>('7d');
-  const [loja, setLoja] = useState('Todas as Lojas');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -100,7 +99,7 @@ export function Reports() {
 <html>
 <head>
   <meta charset="UTF-8"/>
-  <title>Relatório MochiMochi Candy Store</title>
+  <title>Relatório ${STORE_NAME} – ${STORE_UNIT}</title>
   <style>
     body{font-family:Arial,sans-serif;padding:32px;color:#3D1C1C;background:#fff;}
     h1{color:#F4A0C0;margin-bottom:4px;font-size:24px;}
@@ -117,10 +116,10 @@ export function Reports() {
   </style>
 </head>
 <body>
-  <h1>🍡 MochiMochi Candy Store</h1>
+  <h1>🍡 ${STORE_NAME}</h1>
   <p style="color:#A07080;font-size:13px;">
     Relatório — ${period === '7d' ? 'Últimos 7 dias' : period === '30d' ? 'Últimos 30 dias' : `${escapeHtml(startDate)} a ${escapeHtml(endDate)}`}<br/>
-    Loja: ${escapeHtml(loja)} · Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+    ${STORE_UNIT} · Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
   </p>
   <h2>📊 Indicadores</h2>
   <div class="kpis">
@@ -171,7 +170,7 @@ export function Reports() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">Relatórios</h1>
-                <p className="text-white/60 text-xs">MochiMochi Candy Store</p>
+                <p className="text-white/60 text-xs">{STORE_NAME}</p>
               </div>
             </div>
             <button
@@ -223,16 +222,13 @@ export function Reports() {
         </div>
 
         <div className="px-4 mt-4 space-y-4">
-          {/* Loja filter */}
-          <div className="relative">
-            <select
-              value={loja}
-              onChange={(e) => setLoja(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl text-sm font-medium focus:outline-none appearance-none"
-              style={{ background: '#FFFFFF', border: '1.5px solid rgba(244,160,192,0.3)', color: '#3D1C1C' }}
-            >
-              {lojas.map((l) => <option key={l}>{l}</option>)}
-            </select>
+          {/* Unidade (loja única) */}
+          <div
+            className="w-full px-4 py-3 rounded-2xl text-sm font-medium flex items-center gap-2"
+            style={{ background: '#FFFFFF', border: '1.5px solid rgba(244,160,192,0.3)', color: '#3D1C1C' }}
+          >
+            <span aria-hidden>📍</span>
+            <span>{STORE_UNIT}</span>
           </div>
 
           {/* KPIs */}
