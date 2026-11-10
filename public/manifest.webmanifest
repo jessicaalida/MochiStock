@@ -1,0 +1,14 @@
+{
+  "name": "MochiStock",
+  "short_name": "MochiStock",
+  "description": "Gestão de estoque e vendas da MochiMochi Candy Store",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDF0F5",
+  "theme_color": "#E8839E",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
