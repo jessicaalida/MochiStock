@@ -6,3 +6,7 @@ dist/
 .vercel
 .DS_Store
 *.log
+
+# Claude Code: permissões aprovadas no computador (podem conter senhas e chaves).
+# Nunca vai para o GitHub.
+.claude/settings.local.json
